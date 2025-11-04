@@ -1,53 +1,39 @@
-# Sử dụng image PHP chính thức có Composer
+# Base image có PHP-FPM sẵn
 FROM php:8.2-fpm
 
-# Cài đặt các extension cần thiết
+# Cài extension cần thiết cho Laravel
 RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    git \
-    curl \
-    nginx \
+    libpng-dev libonig-dev libxml2-dev libzip-dev zip unzip git curl nginx supervisor \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Cài Composer
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
-# Tạo thư mục app
+# Làm việc trong /var/www/html
 WORKDIR /var/www/html
 
-# Copy composer files trước để cache dependency
+# Copy composer file trước để cache
 COPY composer.json composer.lock ./
-
-# Cài đặt dependency (không dev dependencies)
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Copy toàn bộ code
+# Copy toàn bộ mã nguồn
 COPY . .
 
-# Copy config Nginx
-COPY docker/nginx.conf /etc/nginx/sites-available/default
+# Copy cấu hình nginx và supervisord
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Chạy composer scripts (nếu có)
-RUN composer dump-autoload --optimize
-
-# Set permissions
+# Phân quyền storage và cache
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage \
-    && chmod -R 755 /var/www/html/bootstrap/cache
+    && chmod -R 755 storage bootstrap/cache
 
-# Expose port (Render sẽ inject $PORT)
+# Expose port Render sử dụng
 ENV PORT=8080
 EXPOSE 8080
 
-# Start script
-COPY docker/start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
+# Laravel cần key
+RUN php artisan key:generate || true
 
-CMD ["/usr/local/bin/start.sh"]
-
+# Khởi động qua supervisord
+CMD ["/usr/bin/supervisord"]

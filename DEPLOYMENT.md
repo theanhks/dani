@@ -2,30 +2,31 @@
 
 ## Các lựa chọn Hosting Free cho Laravel
 
-### 1. **Render.com** (Khuyến nghị - Dễ nhất)
-- **Free Tier**: 750 giờ/tháng (đủ dùng)
+### 1. **Railway.app** (Khuyến nghị - Dễ nhất cho Laravel)
+- **Free Tier**: $5 credit/tháng (đủ cho app nhỏ)
 - **Ưu điểm**: 
-  - Setup đơn giản, tự động deploy từ GitHub
-  - Hỗ trợ Laravel tốt
+  - Hỗ trợ PHP/Laravel native (không cần Docker)
+  - Setup siêu đơn giản, tự động detect Laravel
+  - Database PostgreSQL free
+  - HTTPS tự động
+  - Không sleep như Render
+  - Deploy nhanh (~2-3 phút)
+- **Nhược điểm**: 
+  - Credit có hạn, nhưng đủ cho app nhỏ
+- **Link**: https://railway.app
+
+### 1b. **Render.com** (Cần Docker)
+- **Free Tier**: 750 giờ/tháng
+- **Ưu điểm**: 
   - Database PostgreSQL free
   - HTTPS tự động
 - **Nhược điểm**: 
-  - App sẽ "sleep" sau 15 phút không dùng (free tier)
-  - Deploy lần đầu mất ~5-10 phút
+  - **KHÔNG hỗ trợ PHP native**, phải dùng Docker
+  - App sẽ "sleep" sau 15 phút (free tier)
+  - Setup phức tạp hơn (cần Dockerfile)
 - **Link**: https://render.com
 
-### 2. **Railway.app**
-- **Free Tier**: $5 credit/tháng (đủ cho app nhỏ)
-- **Ưu điểm**:
-  - Deploy nhanh, tự động từ GitHub
-  - Database PostgreSQL free
-  - Không sleep như Render
-  - Hỗ trợ Redis, Queue
-- **Nhược điểm**: 
-  - Credit có hạn, cần upgrade nếu dùng nhiều
-- **Link**: https://railway.app
-
-### 3. **Fly.io**
+### 2. **Fly.io**
 - **Free Tier**: 3 VMs nhỏ, 3GB storage, 160GB bandwidth
 - **Ưu điểm**:
   - VPS thật, không bị giới hạn nhiều
@@ -62,10 +63,13 @@
 ## Khuyến nghị
 
 ### Cho người mới bắt đầu:
-**Render.com** - Dễ nhất, setup trong 10 phút
+**Railway.app** - Dễ nhất, hỗ trợ PHP native, setup trong 5 phút
+
+### Cho người muốn dùng Docker:
+**Render.com** - Cần Dockerfile (đã có sẵn trong repo)
 
 ### Cho người có kinh nghiệm:
-**Railway.app** hoặc **Fly.io** - Performance tốt hơn
+**Fly.io** - VPS thật, performance tốt
 
 ### Cho người muốn học VPS:
 **Oracle Cloud Free Tier** - Full control, học được nhiều

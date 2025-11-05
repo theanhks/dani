@@ -4,7 +4,8 @@ FROM php:8.2-fpm
 # Cài extension cần thiết cho Laravel
 RUN apt-get update && apt-get install -y \
     libpng-dev libonig-dev libxml2-dev libzip-dev zip unzip git curl nginx supervisor \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip \
+    libpq-dev \
+    && docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Cài Composer
@@ -32,8 +33,6 @@ RUN chown -R www-data:www-data /var/www/html \
 ENV PORT=8080
 EXPOSE 8080
 
-# Laravel cần key
-RUN php artisan key:generate --force
 # Fix quyền storage và cache
 RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 # Khởi động qua supervisord

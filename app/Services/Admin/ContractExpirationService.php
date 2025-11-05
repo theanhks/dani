@@ -27,31 +27,16 @@ class ContractExpirationService
     {
         $today = Carbon::today()->toDateString();
         
-        // Check if already sent today
-        $notificationLog = NotificationLog::where('notification_date', $today)
-            ->where('type', 'contract_expiration')
-            ->first();
-
-        // If already sent successfully today, skip
-        if ($notificationLog && $notificationLog->status === 'sent') {
-            return [
-                'success' => true,
-                'message' => 'Đã gửi thông báo hôm nay rồi',
-                'already_sent' => true,
-            ];
-        }
-
-        // Get expired contracts (expiration_date <= today)
+        // Get expired contracts (expiration_date <= today) that haven't been notified yet
         $expiredContracts = Contract::whereNotNull('expiration_date')
             ->whereDate('expiration_date', '<=', $today)
+            ->whereNull('notification_sent_at')
             ->get();
 
         if ($expiredContracts->isEmpty()) {
-            // Log no expired contracts
-            $this->logNotification($today, 'sent', 0, 'Không có hợp đồng hết hạn');
             return [
                 'success' => true,
-                'message' => 'Không có hợp đồng hết hạn',
+                'message' => 'Không có hợp đồng hết hạn hoặc đã gửi thông báo tất cả',
                 'count' => 0,
             ];
         }
@@ -66,22 +51,15 @@ class ContractExpirationService
             ];
         })->toArray();
 
-        // Send email with retry logic
-        $maxRetries = 2;
-        $retryCount = $notificationLog ? $notificationLog->retry_count : 0;
-        
-        if ($retryCount >= $maxRetries) {
-            return [
-                'success' => false,
-                'message' => 'Đã vượt quá số lần thử lại',
-                'retry_count' => $retryCount,
-            ];
-        }
-
         $emailSent = $this->sendExpiredContractsEmail($contractsData);
 
         if ($emailSent) {
-            // Update or create log with success
+            // Mark contracts as notified
+            $contractIds = $expiredContracts->pluck('id')->toArray();
+            Contract::whereIn('id', $contractIds)
+                ->update(['notification_sent_at' => now()]);
+            
+            // Log notification
             $this->logNotification($today, 'sent', 0, null, $contractsData);
             
             return [
@@ -91,14 +69,12 @@ class ContractExpirationService
                 'contracts' => $contractsData,
             ];
         } else {
-            // Update or create log with failed status and increment retry
-            $this->logNotification($today, 'failed', $retryCount + 1, 'Gửi email thất bại');
+            // Log failed notification
+            $this->logNotification($today, 'failed', 1, 'Gửi email thất bại', $contractsData);
             
             return [
                 'success' => false,
-                'message' => 'Gửi email thất bại, sẽ thử lại lần sau',
-                'retry_count' => $retryCount + 1,
-                'max_retries' => $maxRetries,
+                'message' => 'Gửi email thất bại',
             ];
         }
     }

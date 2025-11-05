@@ -19,4 +19,5 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     
     // Contracts routes
     Route::resource('contracts', ContractController::class);
+    Route::post('contracts/check-expired', [ContractController::class, 'checkExpired'])->name('contracts.check-expired');
 });

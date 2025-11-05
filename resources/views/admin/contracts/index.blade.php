@@ -18,14 +18,31 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="card-title">Danh sách hợp đồng</h4>
-                        <a href="{{ route('admin.contracts.create') }}" class="btn btn-primary">
-                            <i class="icon-plus"></i> Tạo mới
-                        </a>
+                        <div>
+                            <form action="{{ route('admin.contracts.check-expired') }}" method="POST" class="d-inline mr-2" onsubmit="return confirm('Bạn có chắc chắn muốn kiểm tra và gửi thông báo hợp đồng hết hạn?');">
+                                @csrf
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="icon-envelope"></i> Kiểm tra hết hạn
+                                </button>
+                            </form>
+                            <a href="{{ route('admin.contracts.create') }}" class="btn btn-primary">
+                                <i class="icon-plus"></i> Tạo mới
+                            </a>
+                        </div>
                     </div>
 
                     @if(session('success'))
                         <div class="alert alert-success alert-dismissible fade show">
                             {{ session('success') }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    @endif
+
+                    @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            {{ session('error') }}
                             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>

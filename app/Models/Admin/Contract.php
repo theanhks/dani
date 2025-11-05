@@ -28,6 +28,7 @@ class Contract extends Model
         'effective_period_value',
         'effective_period_type',
         'expiration_date',
+        'notification_sent_at',
     ];
 
     /**
@@ -39,6 +40,7 @@ class Contract extends Model
         'contract_date' => 'date',
         'expiration_date' => 'date',
         'effective_period_value' => 'integer',
+        'notification_sent_at' => 'datetime',
     ];
 }
 

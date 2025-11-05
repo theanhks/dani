@@ -32,7 +32,7 @@ RUN chown -R www-data:www-data /var/www/html \
 # Expose port Render sử dụng
 ENV PORT=8080
 EXPOSE 8080
-
+RUN php artisan migrate --force
 # Fix quyền storage và cache
 RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 # Khởi động qua supervisord

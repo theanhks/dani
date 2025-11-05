@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreContractRequest;
 use App\Http\Requests\Admin\UpdateContractRequest;
 use App\Services\Admin\ContractService;
+use App\Services\Admin\ContractExpirationService;
 
 class ContractController extends Controller
 {
@@ -82,5 +83,35 @@ class ContractController extends Controller
 
         return redirect()->route('admin.contracts.index')
             ->with('success', 'Xóa hợp đồng thành công!');
+    }
+
+    /**
+     * Check and send notification for expired contracts
+     */
+    public function checkExpired()
+    {
+        try {
+            $contractExpirationService = app(ContractExpirationService::class);
+            $result = $contractExpirationService->checkAndSendExpiredContracts();
+            
+            if ($result['success']) {
+                $message = $result['message'];
+                if (isset($result['count']) && $result['count'] > 0) {
+                    $message .= ' (Đã gửi thông báo cho ' . $result['count'] . ' hợp đồng)';
+                }
+                return redirect()->route('admin.contracts.index')
+                    ->with('success', $message);
+            } else {
+                return redirect()->route('admin.contracts.index')
+                    ->with('error', $result['message'] ?? 'Có lỗi xảy ra khi gửi thông báo');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to check expired contracts', [
+                'error' => $e->getMessage(),
+            ]);
+            
+            return redirect()->route('admin.contracts.index')
+                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
     }
 }

@@ -19,7 +19,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 
 # Copy toàn bộ mã nguồn
 COPY . .
-
+RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 # Copy cấu hình nginx và supervisord
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf

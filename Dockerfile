@@ -33,7 +33,8 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Laravel cần key
-RUN php artisan key:generate || true
-
+RUN php artisan key:generate --force
+# Fix quyền storage và cache
+RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 # Khởi động qua supervisord
 CMD ["/usr/bin/supervisord"]

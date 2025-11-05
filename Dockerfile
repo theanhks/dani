@@ -20,20 +20,19 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 
 # Copy toàn bộ mã nguồn
 COPY . .
-RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
+
 # Copy cấu hình nginx và supervisord
+RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Phân quyền storage và cache
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 storage bootstrap/cache
+    && chmod -R 777 storage bootstrap/cache
 
 # Expose port Render sử dụng
 ENV PORT=8080
 EXPOSE 8080
-RUN php artisan migrate --force
-# Fix quyền storage và cache
-RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
-# Khởi động qua supervisord
-CMD ["/usr/bin/supervisord"]
+
+# Khởi động: migrate xong rồi start supervisor
+CMD bash -c "php artisan migrate --force && /usr/bin/supervisord"

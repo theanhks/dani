@@ -35,4 +35,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Khởi động: migrate xong rồi start supervisor
-CMD bash -c "php artisan migrate --force && /usr/bin/supervisord"
+CMD ["/usr/bin/supervisord"]

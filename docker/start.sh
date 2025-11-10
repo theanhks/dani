@@ -13,14 +13,21 @@ if [ "$APP_ENV" != "local" ]; then
     php artisan view:cache
 fi
 
-# Chạy migrations (optional - có thể comment nếu không muốn auto migrate)
-# php artisan migrate --force
+# Chạy migrations (optional - bỏ comment nếu cần)
+# if [ "$APP_ENV" = "production" ]; then
+#     php artisan migrate --force
+# fi
 
 # Update Nginx config với PORT từ env (Render inject $PORT)
 PORT=${PORT:-8080}
-sed -i "s/listen 8080;/listen $PORT;/g" /etc/nginx/sites-available/default
+sed -i "s/listen 8080;/listen $PORT;/g" /etc/nginx/conf.d/default.conf  # Đảm bảo đúng đường dẫn
 
-# Start PHP-FPM và Nginx
-php-fpm -D
+# Đảm bảo thư mục run cho PHP-FPM
+mkdir -p /var/run/php
+chown www-data:www-data /var/run/php
+
+# Start PHP-FPM foreground (không daemonize)
+php-fpm8.2 -F  # Sử dụng -F thay vì -D
+
+# Start Nginx foreground
 nginx -g 'daemon off;'
-

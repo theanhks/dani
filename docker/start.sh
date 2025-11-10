@@ -6,19 +6,14 @@ if [ -z "$APP_KEY" ]; then
     php artisan key:generate --force
 fi
 
-# Cache config và routes (chỉ khi không phải dev)
+# Cache config, route, view (trừ local)
 if [ "$APP_ENV" != "local" ]; then
     php artisan config:cache
     php artisan route:cache
     php artisan view:cache
 fi
 
-# Chạy migrations (optional - bỏ comment nếu cần)
-# if [ "$APP_ENV" = "production" ]; then
-#     php artisan migrate --force
-# fi
-
-# Update Nginx config với PORT từ env (Render inject $PORT)
+# Update Nginx config với PORT từ Render
 PORT=${PORT:-8080}
 sed -i "s/listen 8080;/listen $PORT;/g" /etc/nginx/conf.d/default.conf
 
@@ -26,8 +21,8 @@ sed -i "s/listen 8080;/listen $PORT;/g" /etc/nginx/conf.d/default.conf
 mkdir -p /var/run/php
 chown www-data:www-data /var/run/php
 
-# Start PHP-FPM foreground (không daemonize)
-php-fpm -F
+# Start PHP-FPM nền
+php-fpm -D
 
-# Start Nginx foreground
+# Start Nginx foreground (Render cần process này)
 nginx -g 'daemon off;'

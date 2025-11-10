@@ -20,25 +20,22 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 
 # Copy toàn bộ mã nguồn
 COPY . .
+
+# Xóa default config của nginx và thay bằng config của mình
 RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
-# Copy cấu hình nginx và supervisord
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy file start script
+COPY docker/start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
 
 # Phân quyền storage và cache
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 storage bootstrap/cache
+    && chmod -R 777 storage bootstrap/cache
 
 # Expose port Render sử dụng
 ENV PORT=8080
 EXPOSE 8080
 
-# Fix quyền storage và cache
-RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
-# ... (phần trước giữ nguyên)
-
-# Copy script start
-COPY docker/start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
-# Khởi động qua supervisord
+# Chạy script khởi động
 CMD ["/usr/local/bin/start.sh"]

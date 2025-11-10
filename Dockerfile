@@ -38,7 +38,7 @@ RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 # ... (phần trước giữ nguyên)
 
 # Copy script start
-COPY start.sh /usr/local/bin/start.sh
+COPY docker/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 # Khởi động qua supervisord
 CMD ["/usr/local/bin/start.sh"]

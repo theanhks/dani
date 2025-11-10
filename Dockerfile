@@ -21,21 +21,21 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 # Copy toàn bộ mã nguồn
 COPY . .
 
-# Xóa default config của nginx và thay bằng config của mình
+# Xóa config mặc định của nginx
 RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy file start script
+# Copy file cấu hình riêng
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 
-# Phân quyền storage và cache
+# Phân quyền cho Laravel
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 777 storage bootstrap/cache
 
-# Expose port Render sử dụng
+# Mở port Render inject
 ENV PORT=8080
 EXPOSE 8080
 
-# Chạy script khởi động
+# Lệnh khởi động chính
 CMD ["/usr/local/bin/start.sh"]

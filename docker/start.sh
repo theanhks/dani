@@ -21,8 +21,8 @@ sed -i "s/listen 8080;/listen $PORT;/g" /etc/nginx/conf.d/default.conf
 mkdir -p /var/run/php
 chown www-data:www-data /var/run/php
 
-# Start PHP-FPM nền
-php-fpm -D
+# Khởi động Nginx trước (background)
+nginx
 
-# Start Nginx foreground (Render cần process này)
-nginx -g 'daemon off;'
+# Giữ PHP-FPM foreground để Render detect port
+exec php-fpm -F

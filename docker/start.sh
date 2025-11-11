@@ -8,6 +8,11 @@ fi
 
 # Cache config, route, view (trừ local)
 if [ "$APP_ENV" != "local" ]; then
+    # Clear cache trước để đảm bảo dùng config mới
+    php artisan config:clear
+    php artisan route:clear
+    php artisan view:clear
+    # Cache lại với config mới
     php artisan config:cache
     php artisan route:cache
     php artisan view:cache

@@ -1,41 +1,27 @@
-# Base image có PHP-FPM sẵn
+# Base image
 FROM php:8.2-fpm
 
-# Cài extension cần thiết cho Laravel
 RUN apt-get update && apt-get install -y \
-    libpng-dev libonig-dev libxml2-dev libzip-dev zip unzip git curl nginx supervisor \
-    libpq-dev \
+    libpng-dev libonig-dev libxml2-dev libzip-dev zip unzip git curl nginx supervisor libpq-dev \
     && docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Cài Composer
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
-# Làm việc trong /var/www/html
 WORKDIR /var/www/html
 
-# Copy composer file trước để cache
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Copy toàn bộ mã nguồn
 COPY . .
-
-# Xóa config mặc định của nginx
 RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
-
-# Copy file cấu hình riêng
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
-
-# Phân quyền cho Laravel
-RUN chown -R www-data:www-data /var/www/html \
+RUN chmod +x /usr/local/bin/start.sh \
+    && chown -R www-data:www-data /var/www/html \
     && chmod -R 777 storage bootstrap/cache
 
-# Mở port Render inject
 ENV PORT=8080
 EXPOSE 8080
 
-# Lệnh khởi động chính
 CMD ["/usr/local/bin/start.sh"]

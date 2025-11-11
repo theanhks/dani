@@ -30,13 +30,9 @@ chown -R www-data:www-data /var/run/php
 echo "🔧 Starting PHP-FPM..."
 php-fpm -D
 
-# Verify PHP-FPM started (dùng ps thay vì pgrep vì container có thể không có pgrep)
-sleep 1
-if ! ps aux | grep -v grep | grep php-fpm > /dev/null; then
-  echo "❌ PHP-FPM failed to start"
-  exit 1
-fi
-echo "✅ PHP-FPM process started"
+# Đợi một chút để PHP-FPM khởi động
+sleep 2
+echo "✅ PHP-FPM started (checking socket will verify it's running)"
 
 # 🔥 Đợi socket được tạo (tránh 502)
 echo "⏳ Waiting for PHP-FPM socket..."

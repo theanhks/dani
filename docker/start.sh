@@ -30,6 +30,14 @@ SOCKET_PATH="127.0.0.1:9000"
 echo "📋 Nginx configuration:"
 grep "listen" /etc/nginx/conf.d/default.conf || true
 
+# Đảm bảo permissions đúng cho Nginx
+echo "🔧 Setting permissions..."
+chown -R www-data:www-data /var/www/html
+chmod -R 755 /var/www/html
+chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
+echo "📋 Checking public directory:"
+ls -la /var/www/html/public/ | head -10 || true
+
 # PHP-FPM đã được cấu hình để dùng TCP (127.0.0.1:9000), không cần thư mục socket
 
 # 🔥 Start PHP-FPM trước (background)

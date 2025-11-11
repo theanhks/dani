@@ -30,9 +30,9 @@ chown -R www-data:www-data /var/run/php
 echo "🔧 Starting PHP-FPM..."
 php-fpm -D
 
-# Verify PHP-FPM started
+# Verify PHP-FPM started (dùng ps thay vì pgrep vì container có thể không có pgrep)
 sleep 1
-if ! pgrep -f php-fpm > /dev/null; then
+if ! ps aux | grep -v grep | grep php-fpm > /dev/null; then
   echo "❌ PHP-FPM failed to start"
   exit 1
 fi

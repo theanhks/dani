@@ -19,10 +19,17 @@ sed -i "s/listen 8080;/listen $PORT;/g" /etc/nginx/conf.d/default.conf
 
 # Đảm bảo thư mục run cho PHP-FPM
 mkdir -p /var/run/php
-chown www-data:www-data /var/run/php
+chown -R www-data:www-data /var/run/php
 
-# Khởi động Nginx trước (background)
-nginx
+# 🔥 Start PHP-FPM trước (background)
+php-fpm -D
 
-# Giữ PHP-FPM foreground để Render detect port
-exec php-fpm -F
+# 🔥 Đợi socket được tạo (tránh 502)
+echo "⏳ Waiting for PHP-FPM socket..."
+while [ ! -S /var/run/php/php8.2-fpm.sock ]; do
+  sleep 0.5
+done
+echo "✅ PHP-FPM socket ready."
+
+# 🔥 Start Nginx ở foreground (Render cần foreground process)
+exec nginx -g "daemon off;"

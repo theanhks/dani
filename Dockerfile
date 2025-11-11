@@ -16,6 +16,10 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 COPY . .
 RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Backup và thay thế www.conf để đảm bảo dùng cấu hình của chúng ta
+RUN if [ -f /usr/local/etc/php-fpm.d/www.conf ]; then \
+      mv /usr/local/etc/php-fpm.d/www.conf /usr/local/etc/php-fpm.d/www.conf.default.bak; \
+    fi
 COPY docker/www.conf /usr/local/etc/php-fpm.d/www.conf
 COPY docker/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh \

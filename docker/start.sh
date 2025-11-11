@@ -15,21 +15,56 @@ fi
 
 # Update Nginx config với PORT từ Render
 PORT=${PORT:-8080}
+echo "🌐 Configuring Nginx to listen on port $PORT"
 sed -i "s/listen 8080;/listen $PORT;/g" /etc/nginx/conf.d/default.conf
+
+# Verify nginx config
+echo "📋 Nginx configuration:"
+grep "listen" /etc/nginx/conf.d/default.conf || true
 
 # Đảm bảo thư mục run cho PHP-FPM
 mkdir -p /var/run/php
 chown -R www-data:www-data /var/run/php
 
 # 🔥 Start PHP-FPM trước (background)
+echo "🔧 Starting PHP-FPM..."
 php-fpm -D
+
+# Verify PHP-FPM started
+sleep 1
+if ! pgrep -f php-fpm > /dev/null; then
+  echo "❌ PHP-FPM failed to start"
+  exit 1
+fi
+echo "✅ PHP-FPM process started"
 
 # 🔥 Đợi socket được tạo (tránh 502)
 echo "⏳ Waiting for PHP-FPM socket..."
-while [ ! -S /var/run/php/php8.2-fpm.sock ]; do
+SOCKET_PATH="/var/run/php/php-fpm.sock"
+timeout=30
+elapsed=0
+while [ ! -S "$SOCKET_PATH" ] && [ $elapsed -lt $timeout ]; do
   sleep 0.5
+  elapsed=$((elapsed + 1))
 done
-echo "✅ PHP-FPM socket ready."
+
+if [ ! -S "$SOCKET_PATH" ]; then
+  echo "❌ PHP-FPM socket not found at $SOCKET_PATH after $timeout seconds"
+  echo "Checking PHP-FPM status..."
+  ps aux | grep php-fpm || true
+  ls -la /var/run/php/ || true
+  exit 1
+fi
+
+echo "✅ PHP-FPM socket ready at $SOCKET_PATH"
+
+# Test nginx configuration
+echo "🔍 Testing Nginx configuration..."
+nginx -t || {
+  echo "❌ Nginx configuration test failed"
+  exit 1
+}
 
 # 🔥 Start Nginx ở foreground (Render cần foreground process)
+echo "🚀 Starting Nginx on port $PORT..."
 exec nginx -g "daemon off;"

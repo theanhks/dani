@@ -16,6 +16,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 COPY . .
 RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/www.conf /usr/local/etc/php-fpm.d/www.conf
 COPY docker/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh \
     && chown -R www-data:www-data /var/www/html \

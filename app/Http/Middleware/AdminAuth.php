@@ -17,7 +17,8 @@ class AdminAuth
     public function handle(Request $request, Closure $next): Response
     {
         if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'Vui lòng đăng nhập để tiếp tục.');
+            // Dùng url() thay vì route() để tránh vấn đề với port
+            return redirect('/login')->with('error', 'Vui lòng đăng nhập để tiếp tục.');
         }
 
         return $next($request);

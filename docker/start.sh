@@ -1,100 +1,53 @@
 #!/bin/bash
 set -e
 
-# Generate APP_KEY nếu chưa có
+cd /var/www/html
+
+# Nếu chưa có APP_KEY env thì tạm generate vào .env
 if [ -z "$APP_KEY" ]; then
-    php artisan key:generate --force
+  if [ -f .env ]; then
+    echo "⚙️  No APP_KEY env, generating new key into .env..."
+    php artisan key:generate --force || true
+  else
+    echo "⚠️  No .env file and no APP_KEY env. You should set APP_KEY in Render."
+  fi
 fi
 
-# Cache config, route, view (trừ local)
+# Clear/cache config, routes, views nếu không phải local
 if [ "$APP_ENV" != "local" ]; then
-    # Clear cache trước để đảm bảo dùng config mới
-    php artisan config:clear
-    php artisan route:clear
-    php artisan view:clear
-    # Cache lại với config mới
-    php artisan config:cache
-    php artisan route:cache
-    php artisan view:cache
+  echo "🧹 Clearing caches..."
+  php artisan config:clear || true
+  php artisan route:clear || true
+  php artisan view:clear || true
+
+  echo "📦 Caching config/routes/views..."
+  php artisan config:cache || true
+  php artisan route:cache || true
+  php artisan view:cache || true
 fi
 
-# Update Nginx config với PORT từ Render
+# (OPTIONAL) migrate khi container start – nếu muốn thì bỏ comment:
+# echo "🛢  Running migrations..."
+# php artisan migrate --force || true
+
+# Cập nhật Nginx listen bằng PORT của Render
 PORT=${PORT:-8080}
 echo "🌐 Configuring Nginx to listen on port $PORT"
-sed -i "s/listen 8080;/listen $PORT;/g" /etc/nginx/conf.d/default.conf
+sed -i "s/listen 8080;/listen ${PORT};/g" /etc/nginx/conf.d/default.conf
 
-# PHP-FPM đã được cấu hình để dùng TCP, không cần tìm socket nữa
-SOCKET_PATH="127.0.0.1:9000"
-
-# Verify nginx config
-echo "📋 Nginx configuration:"
-grep "listen" /etc/nginx/conf.d/default.conf || true
-
-# Đảm bảo permissions đúng cho Nginx
-echo "🔧 Setting permissions..."
+# Quyền cho storage + cache
+echo "🔧 Fixing permissions..."
 chown -R www-data:www-data /var/www/html
-chmod -R 755 /var/www/html
-chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
-echo "📋 Checking public directory:"
-ls -la /var/www/html/public/ | head -10 || true
+chmod -R 775 storage bootstrap/cache
 
-# PHP-FPM đã được cấu hình để dùng TCP (127.0.0.1:9000), không cần thư mục socket
-
-# 🔥 Start PHP-FPM trước (background)
-echo "🔧 Starting PHP-FPM..."
-
-# Kiểm tra cấu hình PHP-FPM trước khi start
-echo "📋 Checking PHP-FPM configuration..."
-if [ -f /usr/local/etc/php-fpm.d/www.conf ]; then
-  echo "✅ Found www.conf at /usr/local/etc/php-fpm.d/www.conf"
-  grep "listen" /usr/local/etc/php-fpm.d/www.conf || true
-else
-  echo "⚠️  www.conf not found, PHP-FPM will use default config"
-fi
-
-# Test PHP-FPM config trước khi start
 echo "🔍 Testing PHP-FPM configuration..."
-php-fpm -t || {
-  echo "❌ PHP-FPM configuration test failed"
-  exit 1
-}
+php-fpm -t
 
+echo "🚀 Starting PHP-FPM..."
 php-fpm -D
 
-# Đợi một chút để PHP-FPM khởi động
-sleep 3
-echo "✅ PHP-FPM started"
-
-# Kiểm tra PHP-FPM có đang listen trên TCP port 9000 không
-echo "⏳ Checking if PHP-FPM is listening on TCP 127.0.0.1:9000..."
-timeout=10
-elapsed=0
-while [ $elapsed -lt $timeout ]; do
-  # Kiểm tra port 9000 (2328 trong hex = 9000)
-  if grep -q ":2328 " /proc/net/tcp 2>/dev/null || (command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 9000 2>/dev/null); then
-    echo "✅ PHP-FPM is listening on TCP 127.0.0.1:9000"
-    break
-  fi
-  sleep 1
-  elapsed=$((elapsed + 1))
-  if [ $elapsed -lt $timeout ]; then
-    echo "   Still waiting... ($elapsed seconds)"
-  fi
-done
-
-if [ $elapsed -ge $timeout ]; then
-  echo "⚠️  Could not verify PHP-FPM TCP connection, but continuing anyway..."
-fi
-
-echo "✅ PHP-FPM ready at $SOCKET_PATH"
-
-# Test nginx configuration
 echo "🔍 Testing Nginx configuration..."
-nginx -t || {
-  echo "❌ Nginx configuration test failed"
-  exit 1
-}
+nginx -t
 
-# 🔥 Start Nginx ở foreground (Render cần foreground process)
 echo "🚀 Starting Nginx on port $PORT..."
 exec nginx -g "daemon off;"

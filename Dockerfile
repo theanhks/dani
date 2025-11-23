@@ -18,7 +18,7 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 
 # Install dependencies (CHO PHÉP chạy scripts của composer)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts
 
 # Copy toàn bộ source vào container
 COPY . .

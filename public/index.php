@@ -19,4 +19,4 @@ $app = require __DIR__.'/../bootstrap/app.php';
 
 $app->handleRequest(
     Request::capture()
-)->send();
+);
